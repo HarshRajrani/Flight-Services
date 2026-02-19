@@ -7,6 +7,7 @@ import City from './city.js';
 import Airport from './airport.js';
 import Flight from './flight.js';
 import Seat from './seat.js'
+import mysql2 from 'mysql2';
 
 dotenv.config();
 
@@ -15,21 +16,18 @@ dotenv.config();
 const env = process.env.NODE_ENV || 'development';
 const dbConfig = config[env];
 
-let sequelize;
 
-if (dbConfig.url) {
-  sequelize = new Sequelize(dbConfig.url, {
-    dialect: dbConfig.dialect,
-    dialectOptions: dbConfig.dialectOptions || {}
-  });
-} else {
-  sequelize = new Sequelize(
-    dbConfig.database,
-    dbConfig.username,
-    dbConfig.password,
-    dbConfig
-  );
-}
+const sequelize = new Sequelize(process.env.DATABASE_URL, {
+  dialect: "mysql",
+  dialectModule: mysql2,
+  dialectOptions: {
+    ssl: {
+      require: true,
+      rejectUnauthorized: false
+    }
+  }
+});
+
 sequelize.authenticate()
   .then(() => console.log("Database Connected Successfully"))
   .catch(err => console.error("DB Connection Error:", err));
