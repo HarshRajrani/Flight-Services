@@ -1,30 +1,38 @@
 
 import { Sequelize } from 'sequelize';
-import fs from 'fs';
-import path from 'path';
-import { fileURLToPath } from 'url';
+import config from '../config/config.js';
+import dotenv from 'dotenv';
 import Airplane from './airplane.js';
 import City from './city.js';
 import Airport from './airport.js';
 import Flight from './flight.js';
 import Seat from './seat.js'
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+dotenv.config();
+
 
 // Load config.json
-const configPath = path.join(__dirname, '../config/config.json');
-const configFile = JSON.parse(fs.readFileSync(configPath, 'utf8'));
 const env = process.env.NODE_ENV || 'development';
-const config = configFile[env];
+const dbConfig = config[env];
 
-// Initialize Sequelize
 let sequelize;
-if (config.use_env_variable) {
-  sequelize = new Sequelize(process.env[config.use_env_variable], config);
+
+if (dbConfig.url) {
+  sequelize = new Sequelize(dbConfig.url, {
+    dialect: dbConfig.dialect,
+    dialectOptions: dbConfig.dialectOptions || {}
+  });
 } else {
-  sequelize = new Sequelize(config.database, config.username, config.password, config);
+  sequelize = new Sequelize(
+    dbConfig.database,
+    dbConfig.username,
+    dbConfig.password,
+    dbConfig
+  );
 }
+sequelize.authenticate()
+  .then(() => console.log("Database Connected Successfully"))
+  .catch(err => console.error("DB Connection Error:", err));
 
 // Initialize models
 const db = {};
@@ -41,7 +49,6 @@ db.City.associate(db);
 db.Flight.associate(db);
 db.Seat.associate(db);
 
-db.Sequelize = Sequelize;
 db.Sequelize = Sequelize;
 
 export default db;
